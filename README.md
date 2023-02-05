@@ -2,7 +2,9 @@
 
 ## RUN
 ```shell
-go run main.go client.go message.go hub.go
+go run main.go client.go hub.go
+
+cd client
 go run user_client1.go
 go run user_client2.go
 ```
