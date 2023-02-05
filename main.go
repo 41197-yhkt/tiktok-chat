@@ -10,6 +10,7 @@ package main
 import (
 	"context"
 	"net/http"
+	"v1/dao"
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/app/server"
@@ -39,11 +40,16 @@ func serveHome(_ context.Context, c *app.RequestContext) {
 	c.HTML(http.StatusOK, "home.html", nil)
 }
 
+func Init(){
+	dao.Init()
+}
+
 func main() {
+	Init()
 	hub := newHub()
 	go hub.run()
 	// server.Default() creates a Hertz with recovery middleware.
-	// If you need a pure hertz, you can use server.New()
+	//If you need a pure hertz, you can use server.New()
 	r, err := etcd.NewEtcdRegistry([]string{"127.0.0.1:2379"})
 	if err != nil {
 		panic(err)

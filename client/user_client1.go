@@ -11,6 +11,7 @@ import (
 	"os/signal"
 	"time"
 
+	. "v1/chat"
 	"github.com/gorilla/websocket"
 )
 
@@ -30,7 +31,6 @@ func receiveHandler(connection *websocket.Conn) {
 	}
 }
 
-
 var addr_user = flag.String("addr", "localhost:8001", "http service address")
 
 func main() {
@@ -40,7 +40,7 @@ func main() {
 	signal.Notify(interrupt, os.Interrupt) // Notify the interrupt channel for SIGINT
 
 	// 是否能成功连接
-	u := url.URL{Scheme: "ws", Host: *addr_user, Path: "/ws", RawQuery: "uid=2"}
+	u := url.URL{Scheme: "ws", Host: *addr_user, Path: "/ws", RawQuery: "uid=1"}
 	fmt.Println(u.String())
 	httpHeader := http.Header{}
 	conn, _, err := websocket.DefaultDialer.DialContext(context.Background(), u.String(), httpHeader)
@@ -58,9 +58,9 @@ func main() {
 		case <-time.After(time.Duration(1) * time.Millisecond * 1000):
 			// Send an echo packet every second
 			err := conn.WriteJSON(C2SMessage{
-				User_id: 2,
-				To_user_id: 1,
-				Msg_content: "i am 2",
+				User_id: 1,
+				To_user_id: 2,
+				Msg_content: "i am 1",
 			})
 			if err != nil {
 				log.Println("Error during writing to websocket:", err)

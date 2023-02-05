@@ -7,7 +7,13 @@
 
 package main
 
-import "github.com/cloudwego/hertz/pkg/common/hlog"
+import (
+	"context"
+	"v1/dao"
+
+	. "v1/chat"
+	"github.com/cloudwego/hertz/pkg/common/hlog"
+)
 
 // Hub maintains the set of active clients and broadcasts messages to the
 // clients.
@@ -40,6 +46,7 @@ func (h *Hub) run() {
 		case client := <-h.register:
 			h.clients[client.uid] = client
 			hlog.Info("uid=", client.uid, " login success")
+			h.sendOldMessage(*client)
 		case client := <-h.unregister:
 			if _, ok := h.clients[client.uid]; ok {
 				delete(h.clients, client.uid)
@@ -48,6 +55,26 @@ func (h *Hub) run() {
 		case msg := <-h.broadcast:
 			h.chooseClient(msg)
 		}
+	}
+}
+
+func (h Hub) sendOldMessage(c Client){
+	msgs, err := dao.GetUnsendMessageList(context.Background(), c.uid)
+	if err!=nil{
+		sentErr(c, err.Error())
+	}
+
+	for _, msg := range(msgs){
+		h.chooseClient(C2SMessage{
+			User_id: msg.FromUserId,
+			To_user_id: msg.ToUserId,
+			Msg_content: msg.MsgContent,
+		})
+	}
+
+	err = dao.SetUnsendMessage(context.Background(), c.uid)
+	if err != nil{
+		sentErr(c, err.Error())
 	}
 }
 
@@ -60,12 +87,28 @@ func (h Hub) chooseClient(msg C2SMessage) {
 			delete(h.clients, client.uid)
 		}
 	} else {
-		// 返回用户不存在信息
+		// 将用户信息存入
 		sendClient := h.clients[msg.User_id]
-		sendClient.send <- C2SMessage{
-			User_id:     0,
-			To_user_id:  msg.User_id,
-			Msg_content: "recv user not login",
+
+		msgdao := dao.Message{
+			FromUserId: msg.User_id,
+			ToUserId: msg.To_user_id,
+			MsgContent: msg.Msg_content,
 		}
+		err := dao.CreateMessage(context.Background(), &msgdao)
+
+		if err != nil{
+			sentErr(*sendClient, err.Error())
+		}else{
+			sentErr(*sendClient, "user not login, messages save in sql")
+		}
+	}
+}
+
+func sentErr(c Client, errString string){
+	c.send <- C2SMessage{
+		User_id:     0,
+		To_user_id:  0,
+		Msg_content: errString,
 	}
 }

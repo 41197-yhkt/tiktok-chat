@@ -1,4 +1,4 @@
-package main
+package Chat
 
 // Server to Client Message
 type S2CMessage struct{

@@ -11,7 +11,7 @@ import (
 	"log"
 	"strconv"
 	"time"
-
+	. "v1/chat"
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/common/hlog"
 	"github.com/hertz-contrib/websocket"
@@ -29,11 +29,6 @@ const (
 
 	// Maximum message size allowed from peer.
 	maxMessageSize = 512
-)
-
-var (
-	newline = []byte{'\n'}
-	space   = []byte{' '}
 )
 
 // Client is a middleman between the websocket connection and the hub.
@@ -110,13 +105,6 @@ func (c *Client) writePump() {
 			if err != nil {
 				return
 			}
-
-			// 将send队列中的消息全发送出去
-			// n := len(c.send)
-			// for i := 0; i < n; i++ {
-			// 	w.Write(newline)
-			// 	w.Write(<-c.send)
-			// }
 
 		case <-ticker.C:
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
