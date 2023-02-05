@@ -13,7 +13,10 @@ import (
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/app/server"
+	"github.com/cloudwego/hertz/pkg/app/server/registry"
 	"github.com/cloudwego/hertz/pkg/common/hlog"
+	"github.com/cloudwego/hertz/pkg/common/utils"
+	etcd "github.com/hertz-contrib/registry/etcd"
 	"github.com/hertz-contrib/websocket"
 )
 
@@ -41,7 +44,18 @@ func main() {
 	go hub.run()
 	// server.Default() creates a Hertz with recovery middleware.
 	// If you need a pure hertz, you can use server.New()
-	h := server.Default(server.WithHostPorts(addr))
+	r, err := etcd.NewEtcdRegistry([]string{"127.0.0.1:2379"})
+	if err != nil {
+		panic(err)
+	}
+	h := server.Default(
+		server.WithHostPorts(addr),
+		server.WithRegistry(r, &registry.Info{
+			ServiceName: "chatsserver",
+			Addr:        utils.NewNetAddr("tcp", addr),
+			Weight:      10,
+			Tags:        nil,
+		}))
 	h.LoadHTMLGlob("home.html")
 
 	h.GET("/", serveHome)
